@@ -8,6 +8,12 @@ const space_api =
   'https://test.spaceflightnewsapi.net/api/v2/articles?_limit=100'
 
 const Article = ({ title, summary, publishedAt }) => {
+  const date = new Date(publishedAt).toLocaleDateString()
+  const time = new Date(publishedAt).toLocaleString('en-US', {
+    hour: 'numeric',
+    minute: 'numeric'
+  })
+
   return (
     <Box boxShadow="md">
       <Stack spacing={4} p={5} h="full" justify="space-between" bg="#f6f7f1">
@@ -17,9 +23,11 @@ const Article = ({ title, summary, publishedAt }) => {
           </Text>
           <Text fontSize="xs">{summary}</Text>
         </Box>
-        <Text fontSize="xs" textAlign="right" color="gray.500">
-          {new Date(publishedAt).toDateString()}
-        </Text>
+        <Box>
+          <Text fontSize="xs" textAlign="right" color="gray.500">
+            {`${date} | ${time}`}
+          </Text>
+        </Box>
       </Stack>
     </Box>
   )
