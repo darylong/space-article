@@ -1,65 +1,80 @@
 import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { Box, Grid, Stack, Text } from '@chakra-ui/react'
 
-export default function Home() {
+import useSWR from 'swr'
+
+const fetcher = (url) => fetch(url).then((r) => r.json())
+const space_api =
+  'https://test.spaceflightnewsapi.net/api/v2/articles?_limit=100'
+
+const Article = ({ title, summary, publishedAt }) => {
   return (
-    <div className={styles.container}>
+    <Box boxShadow="md">
+      <Stack spacing={4} p={5} h="full" justify="space-between" bg="#f6f7f1">
+        <Box>
+          <Text fontSize="xl" fontWeight="medium" pb={3}>
+            {title}
+          </Text>
+          <Text fontSize="xs">{summary}</Text>
+        </Box>
+        <Text fontSize="xs" textAlign="right" color="gray.500">
+          {new Date(publishedAt).toDateString()}
+        </Text>
+      </Stack>
+    </Box>
+  )
+}
+
+const sortByLaunches = (articles) => {
+  let launchesArticle = articles.filter((item) => item.launches.length > 0)
+  let nonLaunchesArticle = articles.filter((item) => item.launches.length === 0)
+
+  // Sort based on Launches ID
+  launchesArticle.sort((a, b) => {
+    if (a.launches.length > 0 && b.launches.length > 0) {
+      return a.launches[0].id.localeCompare(b.launches[0].id)
+    } else {
+      return 0
+    }
+  })
+
+  return [...nonLaunchesArticle, ...launchesArticle]
+}
+
+const Home = ({ articles }) => {
+  const { data } = useSWR(space_api, fetcher, { initialData: articles })
+  let sortedArticles = sortByLaunches(data)
+
+  return (
+    <div>
       <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
+        <title>🚀 Spaces Article</title>
       </Head>
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+      <Box p={9} bg="#f5d0c8">
+        <Text fontWeight="bold" fontSize="3xl">
+          🚀 Spaces Article
+        </Text>
+      </Box>
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+      <Box flex p={8} bg="#e8ebe4">
+        <Grid templateColumns={['repeat(1, 1fr)', 'repeat(3, 1fr)']} gap={6}>
+          {sortedArticles.map((item) => (
+            <Article
+              title={item.title}
+              summary={item.summary}
+              publishedAt={item.publishedAt}
+            />
+          ))}
+        </Grid>
+      </Box>
     </div>
   )
+}
+
+export default Home
+
+export async function getStaticProps() {
+  const articles = await fetcher(space_api)
+  return { props: { articles } }
 }
